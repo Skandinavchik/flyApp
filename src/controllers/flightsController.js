@@ -4,43 +4,30 @@ import { Flight } from "../models/flightsModel.js";
 const getAllFlights = async (req, res) => {
     try {
 
-        const { from, to, sort } = req.query;
+        const { from, to, departure, sort } = req.query;
 
         const queryObject = { ...req.query };
-        const excludedFields = ['limit', 'page', 'sort'];
+        const excludedFields = ['limit', 'page', 'sort', 'from', 'to', 'departure'];
         excludedFields.forEach(item => delete queryObject[item]);
 
-        let query = Flight.find(from && to
-            ? { 'from': { $regex: `${from}`, $options: 'i' }, 'to': { $regex: `${to}`, $options: 'i' } }
-            : queryObject);
+        let query = Flight.find();
 
         from
             ? query = query.find({ 'from': { $regex: `${from}`, $options: 'i' } })
+            : queryObject;
+
+        to
+            ? query = query.find({ 'to': { $regex: `${to}`, $options: 'i' } })
+            : queryObject;
+
+        departure
+            ? query = query.find({ 'departure': {$gte: departure} })
             : queryObject;
 
         sort
             ? query = query.sort(sort.replaceAll(',', ' '))
             : query = query.sort('from');
 
-        const page = +req.query.page || 1;
-        const limit = +req.query.limit || 20;
-        const skip = (page - 1) * limit;
-
-        query = query.skip(skip).limit(limit);
-
-        if (req.query.page) {
-            const flightsAmount = await Flight.countDocuments();
-
-            if (skip >= flightsAmount) {
-                res.status(404).json({
-                    status: 'failed',
-                    message: `This page doesn't exist`
-                });
-                return;
-            }
-        }
-
-        // Execute query
         const flights = await query;
 
         res.status(200).json({
