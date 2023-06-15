@@ -6,6 +6,10 @@ const getAllFlights = async (req, res) => {
 
         const { from, to, departure, sort } = req.query;
 
+        const aaa = new Date(departure);
+        aaa.setUTCDate(aaa.getUTCDate() + 1);
+        
+
         const queryObject = { ...req.query };
         const excludedFields = ['limit', 'page', 'sort', 'from', 'to', 'departure'];
         excludedFields.forEach(item => delete queryObject[item]);
@@ -21,7 +25,7 @@ const getAllFlights = async (req, res) => {
             : queryObject;
 
         departure
-            ? query = query.find({ 'departure': {$gte: departure} })
+            ? query = query.find({ 'departure': { $gte: departure, $lte: aaa.toISOString() } })
             : queryObject;
 
         sort
