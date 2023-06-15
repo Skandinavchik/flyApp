@@ -8,7 +8,7 @@ const getAllFlights = async (req, res) => {
 
         const aaa = new Date(departure);
         aaa.setUTCDate(aaa.getUTCDate() + 1);
-        
+
 
         const queryObject = { ...req.query };
         const excludedFields = ['limit', 'page', 'sort', 'from', 'to', 'departure'];
@@ -50,6 +50,53 @@ const getAllFlights = async (req, res) => {
     }
 };
 
+const getFlight = async (req, res) => {
+    try {
+        const flight = await Flight.findById(req.params.id);
+
+        res.status(200).json({
+            status: 'success',
+            data: {
+                flight,
+            },
+        });
+
+    } catch (error) {
+        res.status(500).json({
+            status: 'failed',
+            message: error.message,
+        });
+    }
+};
+
+const updateFlight = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { seats } = req.body;
+
+        const flight = await Flight.findById(id);
+
+        const updatedSeats = flight.seats.map(item => {
+            return item.number === seats ? { ...item._doc, available: false } : item;
+        });
+
+        const updatedFlight = await Flight.findByIdAndUpdate(id, { seats: updatedSeats }, { new: true });
+
+        res.status(200).json({
+            status: 'success',
+            data: {
+                updatedFlight,
+            },
+        });
+
+    } catch (error) {
+        res.status(500).json({
+            status: 'failed',
+            message: error.message,
+        });
+    }
+};
+
 const createFlight = async (req, res) => {
     try {
         const { from, to, departure, arrival, duration, price, seats } = req.body;
@@ -80,4 +127,4 @@ const createFlight = async (req, res) => {
 };
 
 
-export { getAllFlights, createFlight };
+export { getAllFlights, getFlight, createFlight, updateFlight };
